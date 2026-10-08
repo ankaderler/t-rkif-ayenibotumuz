@@ -17,7 +17,7 @@ IBAN = "TR06 0001 0021 5470 2002 4550 04"
 ALICI = "Zeynep Alkoç"
 TUTAR = "400 TL"
 
-# Buraya kendi VIP kanal linklerini ekleyebilirsin (Mavi tıklanabilir olacaklar)
+# VIP kanal linklerin (Mavi tıklanabilir olacaklar)
 VIP_LINKLERI = [
     "https://t.me/+ornekKanalLink1",
     "https://t.me/+ornekKanalLink2",
@@ -26,9 +26,8 @@ VIP_LINKLERI = [
     "https://t.me/+ornekKanalLink5",
 ]
 
-# Admin Telegram ID'nizi buraya yazın (Dekontlar bu ID'ye onay için gidecek)
-# Kendi ID'nizi öğrenmek için @userinfobot kullanabilirsiniz.
-ADMIN_ID = 123456789  # <--- BURAYI KENDİ TELEGRAM ID'NİZ İLE DEĞİŞTİRİN!
+# Admin Telegram ID'niz (Dekontlar bu ID'ye onay için gelecek)
+ADMIN_ID = 123456789  # <--- BURAYI KENDİ TELEGRAM ID'NİZ İLE DEĞİŞTİRMEYİ UNUTMAYIN!
 
 logging.basicConfig(level=logging.INFO)
 router = Router()
@@ -132,11 +131,10 @@ async def handle_admin_action(callback: CallbackQuery):
     )
 
     for i, link in enumerate(VIP_LINKLERI, 1):
-      links_text += f"🔗 [VIP Kanal {i için tıkla]({link})}\n"
+      links_text += f"🔗 [VIP Kanal {i} için tıkla]({link})\n"
 
     links_text += (
-        "\n⚠️ Lütfen bu linkleri başkalarıyla paylaşmayın, aksi takdirde"
-        " erişiminiz kalıcı olarak engellenir."
+        "\n⚠️ Lütfen bu linkleri başkalarıyla paylaşmayın, aksi takdirde erişiminiz kalıcı olarak engellenir."
     )
 
     try:
@@ -159,10 +157,7 @@ async def handle_admin_action(callback: CallbackQuery):
     try:
       await callback.bot.send_message(
           chat_id=target_user_id,
-          text=(
-              "❌ **Ödemeniz Onaylanmadı.**\nDekontunuz geçersiz veya tutar"
-              " eşleşmiyor. Lütfen destek ile iletişime geçin."
-          ),
+          text="❌ **Ödemeniz Onaylanmadı.**\nDekontunuz geçersiz veya tutar eşleşmiyor. Lütfen destek ile iletişime geçin.",
       )
       await callback.message.edit_caption(
           caption=callback.message.caption + "\n\n❌ **DURUM: REDDEDİLDİ**",
