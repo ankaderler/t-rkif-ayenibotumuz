@@ -11,8 +11,8 @@ from aiogram.types import (
     Message,
 )
 
-# Bot token ve yapılandırma bilgileri
-TOKEN = "8972897472:AAE3qTglBRqA7nNzB7QeoyGq4IBV0DukjoE"
+# Yeni Güncel Bot Tokeni
+TOKEN = "8972897472:AAEzfW5a8CS6KEN0Z22F8ff8lgLRXaLOFK4"
 IBAN = "TR06 0001 0021 5470 2002 4550 04"
 ALICI = "Zeynep Alkoç"
 TUTAR = "400 TL"
@@ -120,7 +120,7 @@ async def buy_vip(callback: CallbackQuery, state: FSMContext):
       "━━━━━━━━━━━━━━━━━━━\n"
       "1️⃣ Yukarıdaki IBAN hesabına tam **400 TL** gönderin.\n"
       "2️⃣ İşlem sonrasında **Dekontu / Ekran Görüntüsünü (veya PDF)** doğrudan bu sohbet penceresine gönderin.\n"
-      "3️⃣ Sistem dekontu gördüğü an özel VIP davet linklerinizi otomatik verecektir! 🚀"
+      "3️⃣ Sistem dekontu gördüğü an özel VIP davet linklerini otomatik verecektir! 🚀"
   )
   keyboard = InlineKeyboardMarkup(
       inline_keyboard=[
@@ -134,7 +134,7 @@ async def buy_vip(callback: CallbackQuery, state: FSMContext):
 
 @router.message(PaymentState.waiting_for_receipt, F.photo | F.document)
 async def receive_receipt(message: Message, state: FSMContext):
-  # Dekont alındığı an direkt linkleri hazırlayıp gönderiyoruz
+  # Müşteri dekont attığı an anında onaylayıp linkleri veriyoruz
   links_text = (
       "✅ **DEKONT BAŞARIYLA ALINDI! OTOMATİK ONAYLANDI.** ✅\n\n"
       "Tebrikler! Özel davet linkleriniz aşağıdadır:\n\n"
@@ -151,7 +151,6 @@ async def receive_receipt(message: Message, state: FSMContext):
       reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Ana Menüye Dön", callback_data="back_home")]])
   )
   
-  # Kullanıcının durumunu sıfırlıyoruz ki tekrar menüyü rahat kullanabilsin
   await state.clear()
 
 
