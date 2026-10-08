@@ -13,7 +13,7 @@ from aiogram.types import (
 )
 from flask import Flask
 
-# Flask ile sahte web sunucusu (Render'ın port isteğini karşılamak için)
+# Flask ile sahte web sunucusu (Render port gereksinimi için)
 app = Flask(__name__)
 
 
@@ -27,8 +27,8 @@ def run_flask():
   app.run(host="0.0.0.0", port=port)
 
 
-# Bot token ve yapılandırma bilgileri
-TOKEN = "8972897472:AAEzfW5a8CS6KEN0Z22F8ff8lgLRXaLOFK4"
+# Yeni Güncel Bot Tokeni
+TOKEN = "8972897472:AAEKE3qPW7yjFUPVPAu_5SZR7U2dZzgN2Bw"
 IBAN = "TR06 0001 0021 5470 2002 4550 04"
 ALICI = "Zeynep Alkoç"
 TUTAR = "400 TL"
@@ -173,7 +173,6 @@ async def receive_receipt(message: Message, state: FSMContext):
 
 
 async def main():
-  # Flask sunucusunu arka planda (ayrı bir thread içinde) başlatıyoruz
   import threading
 
   t = threading.Thread(target=run_flask)
