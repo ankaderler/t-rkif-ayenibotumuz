@@ -38,7 +38,6 @@ class PaymentState(StatesGroup):
   waiting_for_receipt = State()
 
 
-# Ana Menü Fonksiyonu
 def get_main_menu():
   return InlineKeyboardMarkup(
       inline_keyboard=[
@@ -50,7 +49,6 @@ def get_main_menu():
   )
 
 
-# Başlangıç Komutu (/start)
 @router.message(Command("start"))
 async def cmd_start(message: Message, state: FSMContext):
   await state.clear()
@@ -62,7 +60,6 @@ async def cmd_start(message: Message, state: FSMContext):
   await message.answer(text, reply_markup=get_main_menu(), parse_mode="Markdown")
 
 
-# Ana Menüye Dön Butonu
 @router.callback_query(F.data == "back_home")
 async def back_home(callback: CallbackQuery, state: FSMContext):
   await state.clear()
@@ -78,7 +75,6 @@ async def back_home(callback: CallbackQuery, state: FSMContext):
   await callback.answer()
 
 
-# Nasıl Satın Alınır?
 @router.callback_query(F.data == "how_to_buy")
 async def how_to_buy(callback: CallbackQuery):
   text = (
@@ -97,7 +93,6 @@ async def how_to_buy(callback: CallbackQuery):
   await callback.answer()
 
 
-# VIP Özellikler
 @router.callback_query(F.data == "vip_features")
 async def vip_features(callback: CallbackQuery):
   text = (
@@ -116,7 +111,6 @@ async def vip_features(callback: CallbackQuery):
   await callback.answer()
 
 
-# VIP Satın Al Butonuna Basıldığında (Ödeme Ekranı)
 @router.callback_query(F.data == "buy_vip")
 async def buy_vip(callback: CallbackQuery, state: FSMContext):
   text = (
@@ -141,7 +135,6 @@ async def buy_vip(callback: CallbackQuery, state: FSMContext):
   await callback.answer()
 
 
-# Müşteri dekont gönderdiğinde (Fotoğraf veya Belge/PDF destekler)
 @router.message(PaymentState.waiting_for_receipt, F.photo | F.document)
 async def receive_receipt(message: Message, state: FSMContext):
   user = message.from_user
@@ -153,7 +146,6 @@ async def receive_receipt(message: Message, state: FSMContext):
       reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Ana Menüye Dön", callback_data="back_home")]]))
   await state.clear()
 
-  # Admin'e bildirim gitmesi için (Fotoğraf veya Dosya türüne göre ayarlanır)
   admin_text = (
       "🔔 **YENİ ÖDEME BİLDİRİMİ!**\n\n"
       f"👤 **Müşteri:** {user_name} (ID: `{user_id}`)\n"
@@ -179,7 +171,6 @@ async def receive_receipt(message: Message, state: FSMContext):
     logging.error(f"Admin'e bildirim iletilemedi: {e}")
 
 
-# Admin Onay veya Red İşlemi
 @router.callback_query(F.data.startswith("approve_") | F.data.startswith("reject_"))
 async def handle_admin_action(callback: CallbackQuery):
   data_parts = callback.data.split("_")
@@ -187,7 +178,6 @@ async def handle_admin_action(callback: CallbackQuery):
   target_user_id = int(data_parts[1])
 
   if action == "approve":
-    # Tamamen görsellerdeki gibi mavi tıklanabilir link formatı
     links_text = (
         "✅ **DEKONT ONAYLANDI! ÖDEME ALINDI.** ✅\n\n"
         "Tebrikler! Özel davet linkleriniz aşağıdadır:\n\n"
@@ -237,7 +227,7 @@ async def handle_admin_action(callback: CallbackQuery):
         )
       await callback.answer("Ödeme reddedildi.")
     except Exception as e:
-      await callback.answer(f"Hata: {e}", show_alt=True)
+      await callback.answer(f"Hata: {e}", show_alert=True)
 
 
 async def main():
