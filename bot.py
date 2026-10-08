@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -10,8 +11,23 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     Message,
 )
+from flask import Flask
 
-# Yeni Güncel Bot Tokeni
+# Flask ile sahte web sunucusu (Render'ın port isteğini karşılamak için)
+app = Flask(__name__)
+
+
+@app.route("/")
+def index():
+  return "Bot aktif ve çalışıyor!"
+
+
+def run_flask():
+  port = int(os.environ.get("PORT", 10000))
+  app.run(host="0.0.0.0", port=port)
+
+
+# Bot token ve yapılandırma bilgileri
 TOKEN = "8972897472:AAEzfW5a8CS6KEN0Z22F8ff8lgLRXaLOFK4"
 IBAN = "TR06 0001 0021 5470 2002 4550 04"
 ALICI = "Zeynep Alkoç"
@@ -134,7 +150,6 @@ async def buy_vip(callback: CallbackQuery, state: FSMContext):
 
 @router.message(PaymentState.waiting_for_receipt, F.photo | F.document)
 async def receive_receipt(message: Message, state: FSMContext):
-  # Müşteri dekont attığı an anında onaylayıp linkleri veriyoruz
   links_text = (
       "✅ **DEKONT BAŞARIYLA ALINDI! OTOMATİK ONAYLANDI.** ✅\n\n"
       "Tebrikler! Özel davet linkleriniz aşağıdadır:\n\n"
@@ -146,15 +161,25 @@ async def receive_receipt(message: Message, state: FSMContext):
   links_text += "\n⚠️ **Bu linkler kişiye özeldir, paylaşılması yasaktır.**"
 
   await message.answer(
-      links_text, 
+      links_text,
       parse_mode="Markdown",
-      reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Ana Menüye Dön", callback_data="back_home")]])
+      reply_markup=InlineKeyboardMarkup(
+          inline_keyboard=[
+              [InlineKeyboardButton(text="🔙 Ana Menüye Dön", callback_data="back_home")]
+          ]
+      ),
   )
-  
   await state.clear()
 
 
 async def main():
+  # Flask sunucusunu arka planda (ayrı bir thread içinde) başlatıyoruz
+  import threading
+
+  t = threading.Thread(target=run_flask)
+  t.daemon = True
+  t.start()
+
   bot = Bot(token=TOKEN)
   dp = Dispatcher()
   dp.include_router(router)
