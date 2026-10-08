@@ -27,9 +27,6 @@ VIP_LINKLERI = [
     "https://t.me/+BcHhS86B9ocyMWQ0",
 ]
 
-# Admin Telegram ID'niz (Dekontlar bu ID'ye onay için gelecek)
-ADMIN_ID = 123456789  # <--- BURAYI KENDİ TELEGRAM ID'NİZ İLE DEĞİŞTİRİN!
-
 logging.basicConfig(level=logging.INFO)
 router = Router()
 
@@ -82,7 +79,7 @@ async def how_to_buy(callback: CallbackQuery):
       "1️⃣ **'VIP Üyelik Satın Al'** butonuna basarak güncel IBAN ve ödeme bilgilerine ulaş.\n"
       "2️⃣ Belirtilen tutarı ilgili IBAN hesabına Havale / FAST ile gönder.\n"
       "3️⃣ Ödeme sonrasında dekontun ekran görüntüsünü veya PDF dosyasını doğrudan bu sohbet penceresine gönder.\n"
-      "4️⃣ Sistem dekontu onayladığı an özel VIP davet linkleriniz saniyeler içinde otomatik olarak gelecektir!"
+      "4️⃣ Sistem dekontu algıladığı an özel VIP davet linkleriniz saniyeler içinde otomatik olarak gelecektir!"
   )
   keyboard = InlineKeyboardMarkup(
       inline_keyboard=[
@@ -123,7 +120,7 @@ async def buy_vip(callback: CallbackQuery, state: FSMContext):
       "━━━━━━━━━━━━━━━━━━━\n"
       "1️⃣ Yukarıdaki IBAN hesabına tam **400 TL** gönderin.\n"
       "2️⃣ İşlem sonrasında **Dekontu / Ekran Görüntüsünü (veya PDF)** doğrudan bu sohbet penceresine gönderin.\n"
-      "3️⃣ Sistem dekontu onayladığı an özel VIP davet linkleriniz saniyeler içinde otomatik gelecektir! 🚀"
+      "3️⃣ Sistem dekontu gördüğü an özel VIP davet linklerinizi otomatik verecektir! 🚀"
   )
   keyboard = InlineKeyboardMarkup(
       inline_keyboard=[
@@ -137,97 +134,25 @@ async def buy_vip(callback: CallbackQuery, state: FSMContext):
 
 @router.message(PaymentState.waiting_for_receipt, F.photo | F.document)
 async def receive_receipt(message: Message, state: FSMContext):
-  user = message.from_user
-  user_name = f"@{user.username}" if user.username else user.full_name
-  user_id = user.id
+  # Dekont alındığı an direkt linkleri hazırlayıp gönderiyoruz
+  links_text = (
+      "✅ **DEKONT BAŞARIYLA ALINDI! OTOMATİK ONAYLANDI.** ✅\n\n"
+      "Tebrikler! Özel davet linkleriniz aşağıdadır:\n\n"
+  )
+
+  for i, link in enumerate(VIP_LINKLERI, 1):
+    links_text += f"🔗 [VIP Kanal {i} - Katılmak İçin Tıkla]({link})\n"
+
+  links_text += "\n⚠️ **Bu linkler kişiye özeldir, paylaşılması yasaktır.**"
 
   await message.answer(
-      "✅ **Dekontunuz başarıyla alındı!**\n\nYönetici kontrolü sağlanıyor. Onay verildiğinde VIP linkleriniz anında buraya gönderilecektir.",
-      reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Ana Menüye Dön", callback_data="back_home")]]))
+      links_text, 
+      parse_mode="Markdown",
+      reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Ana Menüye Dön", callback_data="back_home")]])
+  )
+  
+  # Kullanıcının durumunu sıfırlıyoruz ki tekrar menüyü rahat kullanabilsin
   await state.clear()
-
-  admin_text = (
-      "🔔 **YENİ ÖDEME BİLDİRİMİ!**\n\n"
-      f"👤 **Müşteri:** {user_name} (ID: `{user_id}`)\n"
-      f"💵 **Tutar:** {TUTAR}\n\n"
-      "Lütfen dekontu inceleyip onaylayın:"
-  )
-
-  admin_keyboard = InlineKeyboardMarkup(
-      inline_keyboard=[
-          [InlineKeyboardButton(text="✅ Onayla ve Linkleri Gönder", callback_data=f"approve_{user_id}")],
-          [InlineKeyboardButton(text="❌ Reddet", callback_data=f"reject_{user_id}")]
-      ]
-  )
-
-  try:
-    if message.photo:
-      file_id = message.photo[-1].file_id
-      await message.bot.send_photo(chat_id=ADMIN_ID, photo=file_id, caption=admin_text, reply_markup=admin_keyboard, parse_mode="Markdown")
-    elif message.document:
-      file_id = message.document.file_id
-      await message.bot.send_document(chat_id=ADMIN_ID, document=file_id, caption=admin_text, reply_markup=admin_keyboard, parse_mode="Markdown")
-  except Exception as e:
-    logging.error(f"Admin'e bildirim iletilemedi: {e}")
-
-
-@router.callback_query(F.data.startswith("approve_") | F.data.startswith("reject_"))
-async def handle_admin_action(callback: CallbackQuery):
-  data_parts = callback.data.split("_")
-  action = data_parts[0]
-  target_user_id = int(data_parts[1])
-
-  if action == "approve":
-    links_text = (
-        "✅ **DEKONT ONAYLANDI! ÖDEME ALINDI.** ✅\n\n"
-        "Tebrikler! Özel davet linkleriniz aşağıdadır:\n\n"
-    )
-
-    for i, link in enumerate(VIP_LINKLERI, 1):
-      links_text += f"🔗 [VIP Kanal {i} - Katılmak İçin Tıkla]({link})\n"
-
-    links_text += "\n⚠️ **Bu linkler kişiye özeldir, paylaşılması yasaktır.**"
-
-    try:
-      await callback.bot.send_message(
-          chat_id=target_user_id, 
-          text=links_text, 
-          parse_mode="Markdown",
-          reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Ana Menüye Dön", callback_data="back_home")]]))
-      
-      if callback.message.caption:
-        await callback.message.edit_caption(
-            caption=callback.message.caption + "\n\n✅ **DURUM: ONAYLANDI ve Linkler Gönderildi**",
-            reply_markup=None,
-        )
-      elif callback.message.text:
-        await callback.message.edit_text(
-            text=callback.message.text + "\n\n✅ **DURUM: ONAYLANDI ve Linkler Gönderildi**",
-            reply_markup=None,
-        )
-      await callback.answer("Onaylandı ve müşteriye iletildi.")
-    except Exception as e:
-      await callback.answer(f"Hata oluştu: {e}", show_alert=True)
-
-  elif action == "reject":
-    try:
-      await callback.bot.send_message(
-          chat_id=target_user_id,
-          text="❌ **Ödemeniz Onaylanmadı.**\nDekont geçersiz veya tutar uyuşmuyor. Destek için: " + CANLI_DESTEK,
-      )
-      if callback.message.caption:
-        await callback.message.edit_caption(
-            caption=callback.message.caption + "\n\n❌ **DURUM: REDDEDİLDİ**",
-            reply_markup=None,
-        )
-      elif callback.message.text:
-        await callback.message.edit_text(
-            text=callback.message.text + "\n\n❌ **DURUM: REDDEDİLDİ**",
-            reply_markup=None,
-        )
-      await callback.answer("Ödeme reddedildi.")
-    except Exception as e:
-      await callback.answer(f"Hata: {e}", show_alert=True)
 
 
 async def main():
