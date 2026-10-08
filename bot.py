@@ -16,18 +16,19 @@ TOKEN = "8972897472:AAE3qTglBRqA7nNzB7QeoyGq4IBV0DukjoE"
 IBAN = "TR06 0001 0021 5470 2002 4550 04"
 ALICI = "Zeynep Alkoç"
 TUTAR = "400 TL"
+CANLI_DESTEK = "@kralicenizeynep"
 
-# VIP kanal linklerin (Mavi tıklanabilir olacaklar)
+# Müşteriye teslim edilecek gerçek VIP kanal linkleri
 VIP_LINKLERI = [
-    "https://t.me/+ornekKanalLink1",
-    "https://t.me/+ornekKanalLink2",
-    "https://t.me/+ornekKanalLink3",
-    "https://t.me/+ornekKanalLink4",
-    "https://t.me/+ornekKanalLink5",
+    "https://t.me/+Aqi4UqSzr4JjZmRk",
+    "https://t.me/+H2z-xlyZ6zM0OTE0",
+    "https://t.me/+p01bQp6XebkzMmI0",
+    "https://t.me/+HqtuwLtoMkkwMWQ0",
+    "https://t.me/+BcHhS86B9ocyMWQ0",
 ]
 
 # Admin Telegram ID'niz (Dekontlar bu ID'ye onay için gelecek)
-ADMIN_ID = 123456789  # <--- BURAYI KENDİ TELEGRAM ID'NİZ İLE DEĞİŞTİRMEYİ UNUTMAYIN!
+ADMIN_ID = 123456789  # <--- BURAYI KENDİ TELEGRAM ID'NİZ İLE DEĞİŞTİRİN!
 
 logging.basicConfig(level=logging.INFO)
 router = Router()
@@ -37,22 +38,27 @@ class PaymentState(StatesGroup):
   waiting_for_receipt = State()
 
 
-# Başlangıç ve Ödeme Bilgileri Menüsü
+# Başlangıç ve VIP Menü
 @router.message(Command("start"))
 async def cmd_start(message: Message, state: FSMContext):
   text = (
-      "🔥 **Özel VIP Kanalları Paketine Hoş Geldiniz!** 🔥\n\n"
-      "Toplam **5 adet özel VIP kanalımızın** tamamına anında erişim sağlamak için aşağıdaki ödeme bilgilerine yatırım yapmanız gerekmektedir.\n\n"
-      f"💰 **Tutar:** `{TUTAR}`\n"
+      "🔥 **TÜRK VIP KANALLARINA HOŞ GELDİNİZ** 🔥\n\n"
+      "Tamamen özel, gizli ve seçkin içeriklerin yer aldığı **5'li VIP Paketimize** anında erişim sağlayın.\n\n"
+      "💎 **Paket İçeriği:** 5 Adet Özel VIP Kanalın Tümü\n"
+      f"💰 **Toplam Tutar:** `{TUTAR}`\n\n"
+      "📋 **Nasıl Satın Alınır?**\n"
+      "1️⃣ Aşağıdaki **IBAN'a 400 TL** transfer yapın.\n"
+      "2️⃣ Açıklama kısmına sadece kendi kullanıcı adınızı yazın.\n"
+      "3️⃣ **'📤 Dekont Gönder'** butonuna basarak dekont fotoğrafınızı bota iletin.\n"
+      "4️⃣ Yönetici onayından sonra 5 adet mavi tıklanabilir VIP linkiniz anında gelsin!\n\n"
       f"🏦 **IBAN:** `{IBAN}`\n"
-      f"👤 **Alıcı Adı Soyadı:** `{ALICI}`\n\n"
-      "⚠️ **Dikkat:** Açıklama kısmına kullanıcı adınızı yazmayı unutmayın!\n\n"
-      "Ödemeyi yaptıktan sonra lütfen **Dekont Gönder** butonuna basarak dekont fotoğrafınızı veya ekran görüntüsünü bota iletin."
+      f"👤 **Alıcı:** `{ALICI}`"
   )
 
   keyboard = InlineKeyboardMarkup(
       inline_keyboard=[
-          [InlineKeyboardButton(text="📤 Dekont Gönder", callback_data="send_receipt")]
+          [InlineKeyboardButton(text="📤 Dekont Gönder & Satın Al", callback_data="send_receipt")],
+          [InlineKeyboardButton(text="💬 Canlı Destek / İletişim", url=f"https://t.me/{CANLI_DESTEK.lstrip('@')}")]
       ]
   )
   await message.answer(text, reply_markup=keyboard, parse_mode="Markdown")
@@ -60,10 +66,36 @@ async def cmd_start(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "send_receipt")
 async def ask_receipt(callback: CallbackQuery, state: FSMContext):
-  await callback.message.answer(
-      "Lütfen yaptığınız ödemeye ait **dekont fotoğrafını** veya ekran görüntüsünü buraya gönderin:"
+  text = (
+      "📸 **Lütfen Dekont Gönderin**\n\n"
+      f"Lütfen **{TUTAR}** tutarındaki ödemeyi yukarıdaki IBAN'a yaptıktan sonra dekontunuzun ekran görüntüsünü veya fotoğrafını doğrudan bu sohbete gönderin."
   )
+  keyboard = InlineKeyboardMarkup(
+      inline_keyboard=[
+          [InlineKeyboardButton(text="🔙 Ana Menüye Dön", callback_data="back_home")]
+      ]
+  )
+  await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="Markdown")
   await state.set_state(PaymentState.waiting_for_receipt)
+  await callback.answer()
+
+
+@router.callback_query(F.data == "back_home")
+async def back_home(callback: CallbackQuery, state: FSMContext):
+  await state.clear()
+  text = (
+      "🔥 **TÜRK VIP KANALLARINA HOŞ GELDİNİZ** 🔥\n\n"
+      f"💰 **Toplam Tutar:** `{TUTAR}`\n"
+      f"🏦 **IBAN:** `{IBAN}`\n"
+      f"👤 **Alıcı:** `{ALICI}`"
+  )
+  keyboard = InlineKeyboardMarkup(
+      inline_keyboard=[
+          [InlineKeyboardButton(text="📤 Dekont Gönder & Satın Al", callback_data="send_receipt")],
+          [InlineKeyboardButton(text="💬 Canlı Destek / İletişim", url=f"https://t.me/{CANLI_DESTEK.lstrip('@')}")]
+      ]
+  )
+  await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="Markdown")
   await callback.answer()
 
 
@@ -76,13 +108,13 @@ async def receive_receipt(message: Message, state: FSMContext):
   user_id = user.id
 
   await message.answer(
-      "✅ **Dekontunuz başarıyla alındı!**\nYönetici onayından sonra VIP linkleriniz otomatik olarak buraya gönderilecektir. Lütfen bekleyin."
+      "✅ **Dekontunuz Başarıyla Alındı!**\n\nDekontunuz incelemeye alındı. Yönetici onay verdiğinde VIP kanal linkleriniz otomatik olarak buraya gelecektir. Lütfen bekleyin."
   )
   await state.clear()
 
   # Admin'e onay bildirimi gönder
   admin_text = (
-      "🔔 **Yeni Ödeme Bildirimi!**\n\n"
+      "🔔 **Yeni VIP Ödeme Bildirimi!**\n\n"
       f"👤 **Müşteri:** {user_name} (ID: `{user_id}`)\n"
       f"💵 **Tutar:** {TUTAR}\n\n"
       "Lütfen dekontu kontrol edip onaylayın:"
@@ -124,17 +156,17 @@ async def handle_admin_action(callback: CallbackQuery):
   target_user_id = int(data_parts[1])
 
   if action == "approve":
-    # Mavi tıklanabilir linkleri hazırla (Markdown formatında)
+    # Mavi tıklanabilir linkleri hazırla
     links_text = (
         "🎉 **Ödemeniz Onaylandı! VIP Kanallarına Hoş Geldiniz!** 🎉\n\n"
-        "Aşağıdaki mavi bağlantılara tıklayarak özel kanallarımıza hemen katılabilirsiniz:\n\n"
+        "Aşağıdaki özel mavi bağlantılara tıklayarak VIP kanallarımıza hemen katılabilirsiniz:\n\n"
     )
 
     for i, link in enumerate(VIP_LINKLERI, 1):
-      links_text += f"🔗 [VIP Kanal {i} için tıkla]({link})\n"
+      links_text += f"🔗 [VIP Kanal {i} - Tıkla Katıl]({link})\n"
 
     links_text += (
-        "\n⚠️ Lütfen bu linkleri başkalarıyla paylaşmayın, aksi takdirde erişiminiz kalıcı olarak engellenir."
+        "\n⚠️ **Not:** Bu linkler kişiye özeldir, başkalarıyla paylaşılması durumunda erişiminiz kalıcı olarak engellenir."
     )
 
     try:
@@ -142,8 +174,7 @@ async def handle_admin_action(callback: CallbackQuery):
           chat_id=target_user_id, text=links_text, parse_mode="Markdown"
       )
       await callback.message.edit_caption(
-          caption=callback.message.caption
-          + "\n\n✅ **DURUM: ONAYLANDI ve Linkler Gönderildi**",
+          caption=callback.message.caption + "\n\n✅ **DURUM: ONAYLANDI ve Linkler Müşteriye İletildi**",
           reply_markup=None,
       )
       await callback.answer("Onaylandı ve müşteriye iletildi.")
@@ -157,7 +188,7 @@ async def handle_admin_action(callback: CallbackQuery):
     try:
       await callback.bot.send_message(
           chat_id=target_user_id,
-          text="❌ **Ödemeniz Onaylanmadı.**\nDekontunuz geçersiz veya tutar eşleşmiyor. Lütfen destek ile iletişime geçin.",
+          text="❌ **Ödemeniz Onaylanmadı.**\nDekontunuzda tutar eşleşmiyor veya geçersiz. Destek için: " + CANLI_DESTEK,
       )
       await callback.message.edit_caption(
           caption=callback.message.caption + "\n\n❌ **DURUM: REDDEDİLDİ**",
